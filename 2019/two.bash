@@ -19,6 +19,9 @@ while [[ continue -eq 1 ]]; do
 		"99")
 			continue=0
 			;;
+		*)
+			exit 1
+			;;
 	esac
 	i=$((i + 4))
 done
