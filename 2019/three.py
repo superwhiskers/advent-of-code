@@ -1,84 +1,127 @@
 # advent of code 2019 day 3 implementation in python3
+# takes paths as space separated strings of comma-separated instructions as arguments
 
-# implementation details:
-#   central port is (0, 0)
+import sys
 
 # find the manhattan distance between two points
 def distance(a, b):
     return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
-# pathfind
-class Grid:
-    def __init__(self):
-        #self.grid = [[0 for x in range(10000)] for y in range(10000)]  
-        self.grid = [[0 for x in range(500)] for y in range(500)]
-        self.intersections = set()
-
-    def line(self, origin, dest):
-        if origin[0] == dest[0]:
-            # moving along the y axis
-            for i in range(origin[1], dest[1]+1):
-                if self.grid[origin[0]][i] == ".":
-                    self.intersections.add((origin[0], i))
-                    self.grid[origin[0]][i] = "%"
-                elif self.grid[origin[0]][i] == "%":
-                    continue
+# calculate the distance it takes to get to a point along paths
+def point_to_distance(paths, point):
+    dist = 0
+    for path in paths:
+        instructions = path.split(",")
+        pos = (0, 0)
+        for inst in instructions:
+            inst = inst.strip()
+            if inst[0] == "L":
+                # left
+                target = pos[0] - int(inst[1:len(inst)])
+                for i in range(pos[0], target, -1):
+                    if (i, pos[1]) == point:
+                        break
+                    dist += 1
                 else:
-                    self.grid[origin[0]][i] = "."
-        else:
-            # moving along x axis
-            for i in range(origin[0], dest[0]+1):
-                if self.grid[i][origin[1]] == ".":
-                    self.intersections.add((i, origin[1]))
-                    self.grid[i][origin[1]] = "%"
-                elif self.grid[i][origin[1]] == "%":
+                    pos = (target, pos[1])
                     continue
+                break
+            elif inst[0] == "R":
+                # right
+                target = pos[0] + int(inst[1:len(inst)])
+                for i in range(pos[0], target, 1):
+                    if (i, pos[1]) == point:
+                        break
+                    dist += 1
                 else:
-                    self.grid[i][origin[1]] = "."
-        return dest
+                    pos = (target, pos[1])
+                    continue
+                break
+            elif inst[0] == "U":
+                # up
+                target = pos[1] + int(inst[1:len(inst)])
+                for i in range(pos[1], target, 1):
+                    if (pos[0], i) == point:
+                        break
+                    dist += 1
+                else:
+                    pos = (pos[0], target)
+                    continue
+                break
+            elif inst[0] == "D":
+                # down
+                target = pos[1] - int(inst[1:len(inst)])
+                for i in range(pos[1], target, -1):
+                    if (pos[0], i) == point:
+                        break
+                    dist += 1
+                else:
+                    pos = (pos[0], target)
+                    continue
+                break
+    return dist
 
+# convert a path sequence to a set of points
+def path_to_points(path):
+    instructions = path.split(",")
+    coordinates = set()
+    pos = (0, 0)
+    for inst in instructions:
+        inst = inst.strip()
+        if inst[0] == "L":
+            # left
+            target = pos[0] - int(inst[1:len(inst)])
+            for i in range(pos[0], target, -1):
+                coordinates.add((i, pos[1]))
+            pos = (target, pos[1])
+        elif inst[0] == "R":
+            # right
+            target = pos[0] + int(inst[1:len(inst)])
+            for i in range(pos[0], target, 1):
+                coordinates.add((i, pos[1]))
+            pos = (target, pos[1])
+        elif inst[0] == "U":
+            # up
+            target = pos[1] + int(inst[1:len(inst)])
+            for i in range(pos[1], target, 1):
+                coordinates.add((pos[0], i))
+            pos = (pos[0], target)
+        elif inst[0] == "D":
+            # down
+            target = pos[1] - int(inst[1:len(inst)])
+            for i in range(pos[1], target, -1):
+                coordinates.add((pos[0], i))
+            pos = (pos[0], target)
+    return coordinates
 
-    def execute_paths(self, path):
-        # extract the wire one and two paths from the path
-        wirepaths = path.splitlines()
-        
-        # make it extensible
-        for i in range(0, len(wirepaths)):
-            wirepaths[i] = wirepaths[i].split(",")
+# get a list of all of the coordinates of each path
+coordinate_list = []
+for path in sys.argv[1:]:
+    coordinate_list.append(path_to_points(path))
 
-        # now iterate and find intersections
-        for path in wirepaths:
-            coords = (0, 0)
-            for command in path:
-                dest = (0, 0)
-                print(f"executing command={command}, coordinates={coords}")
-                if command[0] == "L":
-                    dest = (coords[0] + -int(command[1:len(command)]), coords[1])
-                elif command[0] == "R":
-                    dest = (coords[0] + int(command[1:len(command)]), coords[1])
-                elif command[0] == "U":
-                    dest = (coords[0], coords[1] + int(command[1:len(command)]))
-                elif command[0] == "D":
-                    dest = (coords[0], coords[1] + -int(command[1:len(command)]))
-                coords = self.line(coords, dest)
+# get all of the common points
+intersections = set.intersection(*coordinate_list)
 
-    def get_closest_intersection(self):
-        # iterate over all intersections and get the longest
-        longest = 0
-        for isect in self.intersections:
-            # get the distance
-            dist = distance((0, 0), isect)
-            if dist > longest:
-                longest = dist
-        # return the longest
-        return longest
+# get the shortest distance from origin
+shortest_distance_direct_from_origin = 0
+for p in intersections:
+   dist = distance((0, 0), p)
+   if dist == 0:
+       continue
+   if shortest_distance_direct_from_origin == 0 or dist < shortest_distance_direct_from_origin:
+       shortest_distance_direct_from_origin = dist
 
+# display it
+print(f"shortest (direct from origin)={shortest_distance_direct_from_origin}")
 
+# get a distance to all of the common points
+shortest_distance_from_origin = 0
+for p in intersections:
+    dist = point_to_distance(sys.argv[1:], p)
+    if dist == 0:
+        continue
+    if shortest_distance_from_origin == 0 or dist < shortest_distance_from_origin:
+        shortest_distance_from_origin = dist
 
-# fill in the data
-grid = Grid()
-
-grid.execute_paths("""R75,D30,R83,U83,L12,D49,R71,U7,L72
-        U62,R66,U55,R34,D71,R55,D58,R83""")
-
-print(grid.get_closest_intersection())
+# display this one, too
+print(f"shortest (along paths)={shortest_distance_from_origin}")

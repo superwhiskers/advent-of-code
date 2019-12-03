@@ -1,8 +1,6 @@
 #!/bin/bash
 # advent of code 2019 day 2 solution bruteforce implementation in bash
 
-# TODO: finish
-
 # two_input.txt is the input intcode string provided to you with noun and verb replaced with a and b, respectively
 # two_target.txt is the required result
 target=$(cat two_target.txt)

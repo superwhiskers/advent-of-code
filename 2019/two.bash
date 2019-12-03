@@ -1,6 +1,6 @@
 #!/bin/bash
 # advent of code 2019 day 2 implementation in bash
-# takes intcode as a non-spaced comma-separated list of integers
+# takes intcode as a non-spaced comma-separated list of integers as arguments
 
 # get the intcode
 IFS=','; code=($1); unset IFS
