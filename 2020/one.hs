@@ -5,7 +5,7 @@ import System.Environment (getArgs)
 
 -- solution to part one
 findOne :: [Int] -> Maybe Int
-findOne l = let (_, _, r) = last $ take takeLength $ scanl' handler (0, 0, Nothing) (cycle l) in r
+findOne l = let (_, _, r) = last . take takeLength $ scanl' handler (0, 0, Nothing) (cycle l) in r
   where
     arrayLength = length l
     takeLength = ((arrayLength * arrayLength) `div` 2) + 1
@@ -20,8 +20,9 @@ findOne l = let (_, _, r) = last $ take takeLength $ scanl' handler (0, 0, Nothi
 findTwo :: [Int] -> [Int]
 findTwo l = [mul x | x <- subsequencesOfSize 3 l, (sum x) == 2020]
   where
-    mul (a:b:c:[]) = a * b * c
+    mul (a : b : c : []) = a * b * c
 
+-- helper for getting subsequences of a certain size
 subsequencesOfSize :: Int -> [a] -> [[a]]
 subsequencesOfSize n xs =
   let l = length xs
@@ -36,5 +37,7 @@ subsequencesOfSize n xs =
 main = do
   strArgs <- getArgs
   let args = map read strArgs
-    in putStrLn $ "one: " ++ (show $ findOne args) ++ "\n" ++
-      "two: " ++ (show $ findTwo args)
+   in putStrLn $
+        "one: " ++ (show . findOne args) ++ "\n"
+          ++ "two: "
+          ++ (show . findTwo args)
